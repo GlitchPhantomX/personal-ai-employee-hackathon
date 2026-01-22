@@ -1,0 +1,26 @@
+{
+  "posting_frequency": {
+    "facebook": "3x_per_week",
+    "instagram": "4x_per_week"
+  },
+  "preferred_days": {
+    "facebook": ["Monday", "Wednesday", "Friday"],
+    "instagram": ["Monday", "Tuesday", "Thursday", "Saturday"]
+  },
+  "preferred_times": {
+    "facebook": "10:00",
+    "instagram": "14:00"
+  },
+  "content_mix": {
+    "business_updates": 30,
+    "industry_insights": 25,
+    "testimonials": 20,
+    "behind_scenes": 15,
+    "products": 10
+  },
+  "hashtag_strategy": {
+    "branded": ["#YourCompany", "#YourBrand"],
+    "industry": ["#Industry", "#BusinessTips"],
+    "trending": "use_current_trends"
+  }
+}
