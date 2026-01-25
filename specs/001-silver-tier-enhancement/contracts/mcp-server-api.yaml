@@ -1,0 +1,247 @@
+openapi: 3.0.3
+info:
+  title: MCP Server API
+  description: Model Context Protocol API for external action execution in the Personal AI Employee system
+  version: 1.0.0
+  contact:
+    name: Personal AI Employee Team
+    url: https://github.com/panaversity/personal-ai-employee-hackathon-0
+
+servers:
+  - url: http://localhost:3000
+    description: Email MCP Server
+  - url: http://localhost:3001
+    description: LinkedIn MCP Server
+  - url: http://localhost:3002
+    description: Browser MCP Server
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns the health status of the MCP server
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  server_type:
+                    type: string
+                    description: Type of MCP server (email, linkedin, browser)
+        '500':
+          description: Server unhealthy
+
+  /email/send:
+    post:
+      summary: Send an email
+      description: Sends an email through the email MCP server
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - to
+                - subject
+                - body
+              properties:
+                to:
+                  type: string
+                  description: Recipient email address
+                  example: "recipient@example.com"
+                from:
+                  type: string
+                  description: Sender email address (optional, uses default if omitted)
+                  example: "sender@example.com"
+                subject:
+                  type: string
+                  description: Email subject
+                  example: "Meeting Reminder"
+                body:
+                  type: string
+                  description: Email body content
+                  example: "This is a reminder about our meeting."
+                attachments:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      filename:
+                        type: string
+                      content:
+                        type: string
+                        format: byte
+                cc:
+                  type: array
+                  items:
+                    type: string
+                  description: CC recipients
+                bcc:
+                  type: array
+                  items:
+                    type: string
+                  description: BCC recipients
+      responses:
+        '200':
+          description: Email sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - message_id
+                properties:
+                  success:
+                    type: boolean
+                  message_id:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Bad request - invalid email format or missing required fields
+        '500':
+          description: Internal server error - email could not be sent
+
+  /linkedin/post:
+    post:
+      summary: Create a LinkedIn post
+      description: Creates a post on LinkedIn through the LinkedIn MCP server
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                  description: Content of the LinkedIn post
+                  example: "Excited to share our latest project update!"
+                visibility:
+                  type: string
+                  enum: [PUBLIC, CONNECTIONS, PRIVATE]
+                  default: PUBLIC
+                  description: Visibility of the post
+                hashtags:
+                  type: array
+                  items:
+                    type: string
+                  description: Hashtags to include in the post
+                  example: ["#AI", "#Innovation"]
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+                  description: URLs to images to attach to the post
+      responses:
+        '200':
+          description: LinkedIn post created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - post_id
+                properties:
+                  success:
+                    type: boolean
+                  post_id:
+                    type: string
+                    description: LinkedIn post identifier
+                  permalink:
+                    type: string
+                    format: uri
+                    description: URL to the posted content
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Bad request - invalid post format or missing required fields
+        '401':
+          description: Unauthorized - invalid or expired LinkedIn token
+        '500':
+          description: Internal server error - post could not be created
+
+  /browser/action:
+    post:
+      summary: Execute browser action
+      description: Performs a browser automation action through the browser MCP server
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [navigate, click, fill_form, extract_data, screenshot]
+                  description: Type of browser action to perform
+                url:
+                  type: string
+                  format: uri
+                  description: URL to navigate to (for navigate and extract_data actions)
+                selector:
+                  type: string
+                  description: CSS selector for click or fill_form actions
+                data:
+                  type: object
+                  description: Additional data for the action (e.g., form fields for fill_form)
+                wait_time:
+                  type: integer
+                  description: Time to wait in milliseconds after the action
+      responses:
+        '200':
+          description: Browser action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                properties:
+                  success:
+                    type: boolean
+                  result:
+                    type: string
+                    description: Result of the browser action
+                  screenshot_url:
+                    type: string
+                    format: uri
+                    description: URL to screenshot if captured
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Bad request - invalid action or missing required fields
+        '500':
+          description: Internal server error - browser action failed
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for MCP server authentication
+
+security:
+  - ApiKeyAuth: []

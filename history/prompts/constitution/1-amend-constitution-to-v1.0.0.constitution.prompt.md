@@ -1,3 +1,29 @@
+---
+id: 1
+title: Amend Constitution to v1.0.0
+stage: constitution
+date: 2026-01-22
+surface: agent
+model: claude-sonnet-4-5-20250929
+feature: none
+branch: master
+user: user
+command: sp.constitution
+labels: ["constitution", "governance", "hackathon-0"]
+links:
+  spec: null
+  ticket: null
+  adr: null
+  pr: null
+files:
+  - .specify/memory/constitution.md
+tests:
+  - none
+---
+
+## Prompt
+
+```text
 # CONSTITUTION OF THE PERSONAL AI EMPLOYEE SYSTEM
 ## Hackathon-0: Building Autonomous FTEs in 2026
 
@@ -775,3 +801,40 @@ AI_Employee_Vault/
 *For questions, clarifications, or to participate in governance, join us every Wednesday at 10:00 PM.*
 
 **Long live the Personal AI Employee System. May it serve humanity wisely, ethically, and reliably.**
+```
+
+## Response snapshot
+
+I have successfully updated the constitution file at `.specify/memory/constitution.md` with the comprehensive Personal AI Employee System Constitution. The new constitution includes:
+
+1. Foundational principles for the AI employee system
+2. Five-layer architecture mandates
+3. Human-in-the-loop governance with approval tiers
+4. Ethical boundaries and prohibitions
+5. Operational standards and reliability requirements
+6. Security framework and threat modeling
+7. Capability progression tiers (Bronze to Platinum)
+8. Governance and amendment processes
+9. Accountability and liability provisions
+10. Sustainability and economics guidelines
+11. Education and knowledge transfer protocols
+12. Future-proofing considerations
+13. Enforcement mechanisms
+14. Appendices with practical guidance
+
+The constitution is now in place and serves as the governing document for all Personal AI Employee implementations.
+
+## Outcome
+
+- ✅ Impact: Major update - replaced basic template with comprehensive constitution for AI employee system
+- 🧪 Tests: none required for constitution update
+- 📁 Files: Updated .specify/memory/constitution.md with complete constitution
+- 🔁 Next prompts: Ready to implement AI employee features based on this constitution
+- 🧠 Reflection: The new constitution provides clear governance framework for AI employee development
+
+## Evaluation notes (flywheel)
+
+- Failure modes observed: none
+- Graders run and results (PASS/FAIL): PASS - constitution properly formatted and saved
+- Prompt variant (if applicable): Standard constitution update
+- Next experiment (smallest change to try): Begin implementing features according to constitutional requirements
