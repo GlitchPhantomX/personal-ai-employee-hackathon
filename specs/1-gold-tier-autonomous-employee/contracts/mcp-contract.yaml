@@ -1,0 +1,235 @@
+openapi: 3.0.3
+info:
+  title: Personal AI Employee MCP Server API
+  description: API specification for Model Context Protocol servers in the Gold Tier Autonomous Employee System
+  version: 1.0.0
+servers:
+  - url: http://localhost:3001
+    description: Xero MCP Server
+  - url: http://localhost:3002
+    description: Facebook MCP Server
+  - url: http://localhost:3003
+    description: Instagram MCP Server
+  - url: http://localhost:3004
+    description: Twitter MCP Server
+  - url: http://localhost:3005
+    description: Calendar MCP Server
+paths:
+  /health:
+    get:
+      summary: Check server health
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2026-01-25T10:00:00Z"
+                  version:
+                    type: string
+                    example: "1.0.0"
+
+  /auth/authorize:
+    get:
+      summary: Initiate OAuth authorization flow
+      responses:
+        '200':
+          description: Authorization URL returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auth_url:
+                    type: string
+                    example: "https://provider.auth/authorize?params..."
+
+  /post:
+    post:
+      summary: Create a post on the platform
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: Content of the post
+                  example: "Check out our latest product update!"
+                media_urls:
+                  type: array
+                  items:
+                    type: string
+                  description: Optional media attachments
+                  example: ["https://example.com/image.jpg"]
+                schedule_time:
+                  type: string
+                  format: date-time
+                  description: Optional scheduled posting time
+                  example: "2026-01-26T10:00:00Z"
+      responses:
+        '200':
+          description: Post created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  post_id:
+                    type: string
+                    example: "1234567890"
+                  url:
+                    type: string
+                    example: "https://platform.com/post/1234567890"
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
+  /send-invoice:
+    post:
+      summary: Create an invoice in the accounting system
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                client_id:
+                  type: string
+                  description: Identifier for the client
+                  example: "client-12345"
+                line_items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      description:
+                        type: string
+                        example: "Website Development"
+                      quantity:
+                        type: number
+                        example: 10
+                      unit_amount:
+                        type: number
+                        example: 100.00
+                due_date:
+                  type: string
+                  format: date
+                  example: "2026-02-25"
+                reference:
+                  type: string
+                  example: "Project ABC"
+      responses:
+        '200':
+          description: Invoice created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  invoice_id:
+                    type: string
+                    example: "INV-2026-001"
+                  status:
+                    type: string
+                    example: "draft"
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
+  /analytics:
+    get:
+      summary: Get analytics for the platform
+      parameters:
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: week
+          description: Time period for analytics
+        - name: start_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Start date for analytics period
+        - name: end_date:
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: End date for analytics period
+      responses:
+        '200':
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  period:
+                    type: string
+                    example: "week"
+                  start_date:
+                    type: string
+                    format: date
+                    example: "2026-01-18"
+                  end_date:
+                    type: string
+                    format: date
+                    example: "2026-01-25"
+                  metrics:
+                    type: object
+                    properties:
+                      posts:
+                        type: integer
+                        example: 12
+                      engagement:
+                        type: integer
+                        example: 345
+                      reach:
+                        type: integer
+                        example: 5234
+                      impressions:
+                        type: integer
+                        example: 12500
+                      followers_growth:
+                        type: integer
+                        example: 45
+                      top_posts:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              example: "post-123"
+                            content:
+                              type: string
+                              example: "Top performing post content"
+                            engagement:
+                              type: integer
+                              example: 120

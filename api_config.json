@@ -1,0 +1,143 @@
+{
+  "services": {
+    "xero": {
+      "baseUrl": "http://localhost:3001",
+      "endpoints": {
+        "health": "/health",
+        "invoices": "/invoices",
+        "expenses": "/expenses",
+        "reports": {
+          "revenue": "/reports/revenue",
+          "profitLoss": "/reports/profit-loss",
+          "balanceSheet": "/reports/balance-sheet"
+        }
+      },
+      "auth": {
+        "type": "oauth2",
+        "clientId": "XERO_CLIENT_ID",
+        "clientSecret": "XERO_CLIENT_SECRET",
+        "redirectUri": "XERO_REDIRECT_URI",
+        "scopes": [
+          "accounting.transactions",
+          "accounting.contacts",
+          "accounting.invoices.read",
+          "accounting.invoices.write"
+        ]
+      },
+      "rateLimits": {
+        "requestsPerMinute": 1000,
+        "burstLimit": 5
+      }
+    },
+    "facebook": {
+      "baseUrl": "http://localhost:3002",
+      "endpoints": {
+        "health": "/health",
+        "post": "/post",
+        "analytics": "/analytics"
+      },
+      "auth": {
+        "type": "oauth2",
+        "accessToken": "FACEBOOK_ACCESS_TOKEN"
+      },
+      "rateLimits": {
+        "requestsPerMinute": 200,
+        "burstLimit": 3
+      }
+    },
+    "instagram": {
+      "baseUrl": "http://localhost:3003",
+      "endpoints": {
+        "health": "/health",
+        "post": "/post",
+        "story": "/story",
+        "insights": "/insights"
+      },
+      "auth": {
+        "type": "oauth2",
+        "accessToken": "INSTAGRAM_ACCESS_TOKEN"
+      },
+      "rateLimits": {
+        "requestsPerMinute": 200,
+        "burstLimit": 3
+      }
+    },
+    "twitter": {
+      "baseUrl": "http://localhost:3004",
+      "endpoints": {
+        "health": "/health",
+        "tweet": "/tweet",
+        "metrics": "/metrics"
+      },
+      "auth": {
+        "type": "oauth2",
+        "apiKey": "TWITTER_API_KEY",
+        "apiSecret": "TWITTER_API_SECRET",
+        "accessToken": "TWITTER_ACCESS_TOKEN",
+        "accessSecret": "TWITTER_ACCESS_SECRET"
+      },
+      "rateLimits": {
+        "requestsPerMinute": 300,
+        "burstLimit": 5
+      }
+    },
+    "calendar": {
+      "baseUrl": "http://localhost:3005",
+      "endpoints": {
+        "health": "/health",
+        "event": "/event",
+        "events": "/events"
+      },
+      "auth": {
+        "type": "oauth2",
+        "credentials": "GOOGLE_CALENDAR_CREDENTIALS"
+      },
+      "rateLimits": {
+        "requestsPerMinute": 60,
+        "burstLimit": 2
+      }
+    }
+  },
+  "system": {
+    "vaultPath": "./AI_Employee_Vault",
+    "logLevel": "INFO",
+    "maxRetries": 3,
+    "retryDelay": 30,
+    "backupRetentionDays": 90,
+    "auditLogRetentionDays": 90
+  },
+  "scheduler": {
+    "ceoBriefing": {
+      "cronExpression": "0 23 * * 0", // Every Sunday at 11 PM
+      "deliveryTime": "08:00", // Monday morning at 8 AM
+      "timezone": "local"
+    },
+    "socialMedia": {
+      "checkInterval": 300, // Every 5 minutes
+      "postBuffer": 60 // Allow 1 minute buffer for scheduling
+    },
+    "xeroSync": {
+      "checkInterval": 3600, // Every hour
+      "batchSize": 50
+    },
+    "healthChecks": {
+      "interval": 60, // Every minute
+      "timeout": 10
+    }
+  },
+  "notifications": {
+    "email": {
+      "smtpHost": "EMAIL_HOST",
+      "smtpPort": "EMAIL_PORT",
+      "username": "EMAIL_USER",
+      "password": "EMAIL_PASSWORD",
+      "fromAddress": "AI_Employee@company.com"
+    },
+    "channels": ["email", "dashboard", "desktop"],
+    "alertThresholds": {
+      "errorRate": 0.01, // 1% error rate threshold
+      "responseTime": 5000, // 5 second response time threshold
+      "uptime": 0.95 // 95% uptime threshold
+    }
+  }
+}

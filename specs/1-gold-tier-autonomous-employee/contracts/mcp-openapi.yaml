@@ -1,0 +1,224 @@
+openapi: 3.0.3
+info:
+  title: Personal AI Employee MCP Server API
+  description: API specification for Model Context Protocol servers in the Gold Tier Autonomous Employee System
+  version: 1.0.0
+servers:
+  - url: http://localhost:3001
+    description: Xero MCP Server
+  - url: http://localhost:3002
+    description: Facebook MCP Server
+  - url: http://localhost:3003
+    description: Instagram MCP Server
+  - url: http://localhost:3004
+    description: Twitter MCP Server
+  - url: http://localhost:3005
+    description: Calendar MCP Server
+paths:
+  /health:
+    get:
+      summary: Check server health
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2026-01-25T10:00:00Z"
+
+  /post:
+    post:
+      summary: Create a post on the platform
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Content of the post
+                  example: "Check out our latest product update!"
+                link:
+                  type: string
+                  description: Optional link to include
+                  example: "https://example.com/product"
+                image_url:
+                  type: string
+                  description: Optional image URL
+                  example: "https://example.com/image.jpg"
+      responses:
+        '200':
+          description: Post created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  post_id:
+                    type: string
+                    example: "1234567890"
+                  url:
+                    type: string
+                    example: "https://platform.com/post/1234567890"
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
+  /send-email:
+    post:
+      summary: Send an email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                to:
+                  type: string
+                  description: Recipient email address
+                  example: "client@example.com"
+                subject:
+                  type: string
+                  description: Email subject
+                  example: "Project Update"
+                body:
+                  type: string
+                  description: Email body content
+                  example: "Hi, here's an update on the project..."
+      responses:
+        '200':
+          description: Email sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message_id:
+                    type: string
+                    example: "msg-123456789"
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
+  /create-invoice:
+    post:
+      summary: Create an invoice in Xero
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contact_id:
+                  type: string
+                  description: Xero contact ID
+                  example: "cfd16aeb-1727-440c-9e98-76543210abcd"
+                line_items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      description:
+                        type: string
+                        example: "Website Development"
+                      quantity:
+                        type: number
+                        example: 10
+                      unit_amount:
+                        type: number
+                        example: 100.00
+                due_date:
+                  type: string
+                  format: date
+                  example: "2026-02-25"
+                reference:
+                  type: string
+                  example: "Project ABC"
+      responses:
+        '200':
+          description: Invoice created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  invoice_id:
+                    type: string
+                    example: "inv-123456789"
+                  xero_invoice_number:
+                    type: string
+                    example: "INV-2026-001"
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
+  /analytics:
+    get:
+      summary: Get analytics for the platform
+      parameters:
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: week
+          description: Time period for analytics
+      responses:
+        '200':
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  period:
+                    type: string
+                    example: "week"
+                  start_date:
+                    type: string
+                    format: date
+                    example: "2026-01-18"
+                  end_date:
+                    type: string
+                    format: date
+                    example: "2026-01-25"
+                  metrics:
+                    type: object
+                    properties:
+                      posts:
+                        type: integer
+                        example: 12
+                      engagement:
+                        type: integer
+                        example: 345
+                      reach:
+                        type: integer
+                        example: 5234
+                      followers_growth:
+                        type: integer
+                        example: 45
