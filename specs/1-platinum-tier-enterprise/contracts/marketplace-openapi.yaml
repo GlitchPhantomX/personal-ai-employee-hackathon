@@ -1,0 +1,494 @@
+openapi: 3.0.3
+info:
+  title: Marketplace API
+  description: API for managing skills in the AI Employee marketplace
+  version: 1.0.0
+  contact:
+    name: AI Employee Support
+    email: support@example.com
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://staging-api.example.com/v1
+    description: Staging server
+paths:
+  /marketplace/skills:
+    get:
+      summary: List marketplace skills
+      description: Retrieve a paginated list of skills available in the marketplace
+      tags:
+        - Marketplace
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+          description: Number of skills per page
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter skills by category
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Search skills by name or description
+        - name: min_rating
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 0
+            maximum: 5
+          description: Filter by minimum rating
+        - name: is_free
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Filter by free/paid status
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  skills:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MarketplaceSkill'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      summary: Publish skill
+      description: Publish a new skill to the marketplace (requires developer account)
+      tags:
+        - Marketplace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+                - category
+                - definition
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  description: Name of the skill
+                description:
+                  type: string
+                  description: Description of the skill
+                category:
+                  type: string
+                  description: Category of the skill
+                definition:
+                  $ref: '#/components/schemas/SkillDefinition'
+                version:
+                  type: string
+                  pattern: '^\\d+\\.\\d+\\.\\d+$'
+                  default: "1.0.0"
+                  description: Semantic version of the skill
+                price:
+                  type: number
+                  minimum: 0
+                  default: 0
+                  description: Price in USD (0 for free)
+                author:
+                  type: string
+                  description: Name of the author
+                is_public:
+                  type: boolean
+                  default: false
+                  description: Whether the skill is public (requires moderation)
+      responses:
+        '201':
+          description: Skill published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketplaceSkill'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /marketplace/skills/{skillId}:
+    get:
+      summary: Get skill details
+      description: Retrieve details of a specific skill in the marketplace
+      tags:
+        - Marketplace
+      parameters:
+        - name: skillId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the skill to retrieve
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketplaceSkill'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /marketplace/skills/{skillId}/install:
+    post:
+      summary: Install skill
+      description: Install a skill in the current tenant
+      tags:
+        - Marketplace
+      parameters:
+        - name: skillId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the skill to install
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                config:
+                  type: object
+                  description: Configuration for the skill in this tenant
+      responses:
+        '200':
+          description: Skill installed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstalledSkill'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '402':
+          description: Payment required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Payment required"
+                  payment_url:
+                    type: string
+                    description: URL to complete payment
+  /marketplace/skills/{skillId}/uninstall:
+    post:
+      summary: Uninstall skill
+      description: Uninstall a skill from the current tenant
+      tags:
+        - Marketplace
+      parameters:
+        - name: skillId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the skill to uninstall
+      responses:
+        '200':
+          description: Skill uninstalled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Skill uninstalled successfully"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /marketplace/my-skills:
+    get:
+      summary: List my skills
+      description: Retrieve skills published by the current user
+      tags:
+        - Marketplace
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MarketplaceSkill'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /marketplace/installed-skills:
+    get:
+      summary: List installed skills
+      description: Retrieve skills installed in the current tenant
+      tags:
+        - Marketplace
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InstalledSkill'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+components:
+  schemas:
+    MarketplaceSkill:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the skill
+        name:
+          type: string
+          maxLength: 255
+          description: Name of the skill
+        description:
+          type: string
+          description: Description of the skill
+        category:
+          type: string
+          description: Category of the skill
+        definition:
+          $ref: '#/components/schemas/SkillDefinition'
+        version:
+          type: string
+          pattern: '^\\d+\\.\\d+\\.\\d+$'
+          description: Semantic version of the skill
+        author:
+          type: string
+          description: Name of the author
+        price:
+          type: number
+          minimum: 0
+          description: Price in USD (0 for free)
+        rating:
+          type: number
+          minimum: 0
+          maximum: 5
+          description: Average rating
+        downloads:
+          type: integer
+          description: Number of times downloaded
+        is_public:
+          type: boolean
+          description: Whether the skill is publicly visible
+        status:
+          type: string
+          enum: [active, pending, rejected, archived]
+          description: Status in the marketplace
+        created_at:
+          type: string
+          format: date-time
+          description: When the skill was created
+        updated_at:
+          type: string
+          format: date-time
+          description: When the skill was last updated
+      required:
+        - id
+        - name
+        - description
+        - category
+        - definition
+        - version
+        - author
+        - price
+        - is_public
+        - status
+        - created_at
+        - updated_at
+    InstalledSkill:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the installed skill
+        tenant_id:
+          type: string
+          format: uuid
+          description: ID of the tenant the skill is installed in
+        skill_id:
+          type: string
+          format: uuid
+          description: ID of the marketplace skill
+        config:
+          type: object
+          description: Configuration for the skill in this tenant
+        installed_by:
+          type: string
+          format: uuid
+          description: ID of the user who installed the skill
+        installed_at:
+          type: string
+          format: date-time
+          description: When the skill was installed
+        status:
+          type: string
+          enum: [active, disabled]
+          description: Status of the installed skill
+        marketplace_skill:
+          $ref: '#/components/schemas/MarketplaceSkill'
+      required:
+        - id
+        - tenant_id
+        - skill_id
+        - installed_by
+        - installed_at
+        - status
+        - marketplace_skill
+    SkillDefinition:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [action, integration, notification, utility]
+          description: Type of the skill
+        triggers:
+          type: array
+          items:
+            type: string
+            description: Events that trigger the skill
+        actions:
+          type: array
+          items:
+            type: string
+            description: Actions the skill can perform
+        permissions:
+          type: array
+          items:
+            type: string
+            description: Permissions required by the skill
+        configuration_schema:
+          type: object
+          description: JSON Schema for skill configuration
+        dependencies:
+          type: array
+          items:
+            type: string
+            description: Other skills this skill depends on
+      required:
+        - type
+        - actions
+        - permissions
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Current page number
+        limit:
+          type: integer
+          description: Number of items per page
+        total:
+          type: integer
+          description: Total number of items
+        total_pages:
+          type: integer
+          description: Total number of pages
+      required:
+        - page
+        - limit
+        - total
+        - total_pages
+  responses:
+    BadRequest:
+      description: Bad request - invalid input
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Invalid input"
+              details:
+                type: object
+                description: Additional error details
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Authentication required"
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Insufficient permissions"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Resource not found"
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - BearerAuth: []

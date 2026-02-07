@@ -1,0 +1,12 @@
+{
+    "mcpServers": {
+      "linkedin": {
+        "type": "stdio",
+        "command": "node",
+        "args": [
+          "C:/personal-ai-employee-hackathon-0/Personal_AI_Employee/mcp_servers/linkedin_server/index.js"
+        ]
+      }
+    }
+  }
+  

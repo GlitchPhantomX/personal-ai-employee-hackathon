@@ -1,0 +1,370 @@
+openapi: 3.0.3
+info:
+  title: Tenant Management API
+  description: API for managing tenants in the multi-tenant AI Employee system
+  version: 1.0.0
+  contact:
+    name: AI Employee Support
+    email: support@example.com
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://staging-api.example.com/v1
+    description: Staging server
+paths:
+  /tenants:
+    get:
+      summary: List tenants
+      description: Retrieve a paginated list of tenants (admin only)
+      tags:
+        - Tenants
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+          description: Number of tenants per page
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter tenants by status
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tenants:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tenant'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      summary: Create new tenant
+      description: Create a new tenant with an admin user
+      tags:
+        - Tenants
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - admin_email
+                - admin_name
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  description: Name of the tenant
+                slug:
+                  type: string
+                  pattern: '^[a-z0-9-]+$'
+                  description: Unique identifier for the tenant (will be auto-generated if not provided)
+                admin_email:
+                  type: string
+                  format: email
+                  description: Email for the admin user
+                admin_name:
+                  type: string
+                  maxLength: 255
+                  description: Name for the admin user
+                config:
+                  type: object
+                  description: Initial configuration for the tenant
+      responses:
+        '201':
+          description: Tenant created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantWithAdmin'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /tenants/{tenantId}:
+    get:
+      summary: Get tenant details
+      description: Retrieve details of a specific tenant
+      tags:
+        - Tenants
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the tenant to retrieve
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update tenant
+      description: Update details of a specific tenant
+      tags:
+        - Tenants
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the tenant to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                config:
+                  type: object
+                  description: Configuration for the tenant
+                status:
+                  type: string
+                  enum: [active, suspended, cancelled]
+      responses:
+        '200':
+          description: Tenant updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /tenants/{tenantId}/switch:
+    post:
+      summary: Switch to tenant
+      description: Switch the current session to a different tenant
+      tags:
+        - Tenants
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the tenant to switch to
+      responses:
+        '200':
+          description: Tenant switched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Tenant switched successfully"
+                  tenant:
+                    $ref: '#/components/schemas/Tenant'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the tenant
+        name:
+          type: string
+          maxLength: 255
+          description: Name of the tenant
+        slug:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          description: Unique identifier slug for the tenant
+        config:
+          type: object
+          description: Configuration settings for the tenant
+        status:
+          type: string
+          enum: [active, suspended, cancelled]
+          description: Current status of the tenant
+        created_at:
+          type: string
+          format: date-time
+          description: When the tenant was created
+        updated_at:
+          type: string
+          format: date-time
+          description: When the tenant was last updated
+      required:
+        - id
+        - name
+        - slug
+        - status
+        - created_at
+        - updated_at
+    TenantWithAdmin:
+      allOf:
+        - $ref: '#/components/schemas/Tenant'
+        - type: object
+          properties:
+            admin_user:
+              $ref: '#/components/schemas/User'
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the user
+        email:
+          type: string
+          format: email
+          description: User's email address
+        name:
+          type: string
+          maxLength: 255
+          description: User's full name
+        role:
+          type: string
+          enum: [admin, manager, user, viewer]
+          description: User's role in the tenant
+        status:
+          type: string
+          enum: [active, inactive, invited]
+          description: Current status of the user
+      required:
+        - id
+        - email
+        - name
+        - role
+        - status
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Current page number
+        limit:
+          type: integer
+          description: Number of items per page
+        total:
+          type: integer
+          description: Total number of items
+        total_pages:
+          type: integer
+          description: Total number of pages
+      required:
+        - page
+        - limit
+        - total
+        - total_pages
+  responses:
+    BadRequest:
+      description: Bad request - invalid input
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Invalid input"
+              details:
+                type: object
+                description: Additional error details
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Authentication required"
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Insufficient permissions"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Resource not found"
+    Conflict:
+      description: Conflict - resource already exists
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Resource already exists"
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - BearerAuth: []

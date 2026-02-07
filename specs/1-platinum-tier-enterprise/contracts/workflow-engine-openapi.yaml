@@ -1,0 +1,546 @@
+openapi: 3.0.3
+info:
+  title: Workflow Engine API
+  description: API for managing and executing workflows in the AI Employee system
+  version: 1.0.0
+  contact:
+    name: AI Employee Support
+    email: support@example.com
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://staging-api.example.com/v1
+    description: Staging server
+paths:
+  /workflows:
+    get:
+      summary: List workflows
+      description: Retrieve a paginated list of workflows in the current tenant
+      tags:
+        - Workflows
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+          description: Number of workflows per page
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter workflows by status
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter workflows by category
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  workflows:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Workflow'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      summary: Create workflow
+      description: Create a new workflow in the current tenant
+      tags:
+        - Workflows
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - definition
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  description: Name of the workflow
+                description:
+                  type: string
+                  description: Description of the workflow
+                definition:
+                  $ref: '#/components/schemas/WorkflowDefinition'
+                category:
+                  type: string
+                  description: Category of the workflow
+                status:
+                  type: string
+                  enum: [draft, active, paused]
+                  default: draft
+                  description: Initial status of the workflow
+                trigger_conditions:
+                  type: object
+                  description: Conditions that trigger the workflow
+      responses:
+        '201':
+          description: Workflow created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /workflows/{workflowId}:
+    get:
+      summary: Get workflow details
+      description: Retrieve details of a specific workflow
+      tags:
+        - Workflows
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the workflow to retrieve
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update workflow
+      description: Update details of a specific workflow
+      tags:
+        - Workflows
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the workflow to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                description:
+                  type: string
+                definition:
+                  $ref: '#/components/schemas/WorkflowDefinition'
+                category:
+                  type: string
+                status:
+                  type: string
+                  enum: [draft, active, paused]
+      responses:
+        '200':
+          description: Workflow updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete workflow
+      description: Delete a workflow from the current tenant
+      tags:
+        - Workflows
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the workflow to delete
+      responses:
+        '204':
+          description: Workflow deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /workflows/{workflowId}/execute:
+    post:
+      summary: Execute workflow
+      description: Manually trigger execution of a workflow
+      tags:
+        - Workflows
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the workflow to execute
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Input data for the workflow execution
+      responses:
+        '200':
+          description: Workflow execution started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowExecution'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /workflows/{workflowId}/executions:
+    get:
+      summary: List workflow executions
+      description: Retrieve executions of a specific workflow
+      tags:
+        - Workflows
+      parameters:
+        - name: workflowId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the workflow
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+          description: Number of executions per page
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter executions by status
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  executions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkflowExecution'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    Workflow:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the workflow
+        tenant_id:
+          type: string
+          format: uuid
+          description: ID of the tenant the workflow belongs to
+        name:
+          type: string
+          maxLength: 255
+          description: Name of the workflow
+        description:
+          type: string
+          description: Description of the workflow
+        definition:
+          $ref: '#/components/schemas/WorkflowDefinition'
+        category:
+          type: string
+          description: Category of the workflow
+        status:
+          type: string
+          enum: [draft, active, paused]
+          description: Current status of the workflow
+        created_by:
+          type: string
+          format: uuid
+          description: ID of the user who created the workflow
+        created_at:
+          type: string
+          format: date-time
+          description: When the workflow was created
+        updated_at:
+          type: string
+          format: date-time
+          description: When the workflow was last updated
+      required:
+        - id
+        - tenant_id
+        - name
+        - definition
+        - status
+        - created_by
+        - created_at
+        - updated_at
+    WorkflowDefinition:
+      type: object
+      properties:
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowStep'
+        triggers:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowTrigger'
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowCondition'
+        parallel_execution:
+          type: boolean
+          default: false
+          description: Whether steps can execute in parallel
+        error_handling:
+          type: object
+          description: How to handle errors in the workflow
+      required:
+        - steps
+    WorkflowStep:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the step
+        name:
+          type: string
+          description: Name of the step
+        type:
+          type: string
+          enum: [action, decision, delay, integration, notification]
+          description: Type of the step
+        config:
+          type: object
+          description: Configuration for the step
+        next_steps:
+          type: array
+          items:
+            type: string
+            description: IDs of steps to execute after this step
+        condition_ref:
+          type: string
+          description: Reference to a condition to evaluate before executing
+      required:
+        - id
+        - name
+        - type
+    WorkflowTrigger:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [schedule, event, manual, webhook]
+          description: Type of trigger
+        config:
+          type: object
+          description: Configuration for the trigger
+      required:
+        - type
+    WorkflowCondition:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the condition
+        name:
+          type: string
+          description: Name of the condition
+        expression:
+          type: string
+          description: Expression to evaluate
+        operator:
+          type: string
+          enum: [equals, not_equals, greater_than, less_than, contains, matches_regex]
+          description: Operator for comparison
+        value:
+          type: string
+          description: Value to compare against
+      required:
+        - id
+        - name
+        - expression
+    WorkflowExecution:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the execution
+        workflow_id:
+          type: string
+          format: uuid
+          description: ID of the workflow being executed
+        status:
+          type: string
+          enum: [pending, running, completed, failed, cancelled]
+          description: Current status of the execution
+        input_data:
+          type: object
+          description: Input data provided to the workflow
+        output_data:
+          type: object
+          description: Output data produced by the workflow
+        started_at:
+          type: string
+          format: date-time
+          description: When the execution started
+        completed_at:
+          type: string
+          format: date-time
+          description: When the execution completed (if finished)
+        error_message:
+          type: string
+          description: Error message if the execution failed
+      required:
+        - id
+        - workflow_id
+        - status
+        - started_at
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Current page number
+        limit:
+          type: integer
+          description: Number of items per page
+        total:
+          type: integer
+          description: Total number of items
+        total_pages:
+          type: integer
+          description: Total number of pages
+      required:
+        - page
+        - limit
+        - total
+        - total_pages
+  responses:
+    BadRequest:
+      description: Bad request - invalid input
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Invalid input"
+              details:
+                type: object
+                description: Additional error details
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Authentication required"
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Insufficient permissions"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Resource not found"
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - BearerAuth: []
